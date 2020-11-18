@@ -86,10 +86,14 @@ kubectl -n logging describe sa fluent-bit
 #### 步骤四、获取Flunetbit的IAM role，并配置ElasticSearch访问权限。
 ```
 # 获取Fluentbit role
+cat >> ~/.bashrc << EOF
+export ES_DOMAIN_USER=<ES_DOMAIN_USER>
+export ES_DOMAIN_PASSWORD=<ES_DOMAIN_PASSWORD>
 export FLUENTBIT_ROLE=$(eksctl get iamserviceaccount --cluster <your-cluster-name> --namespace logging -o json | jq '.iam.serviceAccounts[].status.roleARN' -r)
 
 # 获取Elasticsearch访问端点
 export ES_ENDPOINT=$(aws es describe-elasticsearch-domain --domain-name ${ES_DOMAIN_NAME} --output text --query "DomainStatus.Endpoint")
+EOF
 
 # 更新Elasticsearch访问权限
 curl -sS -u "${ES_DOMAIN_USER}:${ES_DOMAIN_PASSWORD}" \
@@ -108,8 +112,6 @@ curl -sS -u "${ES_DOMAIN_USER}:${ES_DOMAIN_PASSWORD}" \
 ```
 cd ~/environment/logging
 
-# 获取Elasticsearch访问断点
-export ES_ENDPOINT=$(aws es describe-elasticsearch-domain --domain-name ${ES_DOMAIN_NAME} --output text --query "DomainStatus.Endpoint")
 
 # 替换fluentbit文件内的环境变量
 curl -Ss https://www.eksworkshop.com/intermediate/230_logging/deploy.files/fluentbit.yaml \
